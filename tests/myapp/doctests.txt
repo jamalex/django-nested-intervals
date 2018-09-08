@@ -1,0 +1,748 @@
+>>> from datetime import date
+>>> from django.db import connection
+>>> from nested_intervals.exceptions import InvalidMove
+>>> from myapp.models import Genre, Insert, MultiOrder, Person, Tree
+
+>>> def print_tree_details(nodes):
+...     print('\n'.join(['%s %s %s' %
+...                   (n.pk, n.parent.id if n.parent else "-", n.level) for n in nodes]))
+
+
+>>> def reset_sequence(model):
+...     try:
+...         # for sqlite
+...         connection.cursor().execute(
+...             'UPDATE sqlite_sequence SET seq=0 WHERE name=%s',
+...             [model._meta.db_table])
+...     except:
+...         pass
+...     try:
+...         # for postgres
+...         connection.cursor().execute('ALTER SEQUENCE myapp_category_id_seq MINVALUE 1 RESTART WITH 1;')
+...         connection.cursor().execute('ALTER SEQUENCE myapp_tree_id_seq MINVALUE 1 RESTART WITH 1;')
+...     except:
+...         pass
+
+
+
+# Creation ####################################################################
+>>> action = Genre.objects.create(name='Action')
+>>> platformer = Genre.objects.create(name='Platformer', parent=action)
+>>> platformer_2d = Genre.objects.create(name='2D Platformer', parent=platformer)
+>>> platformer = Genre.objects.get(pk=platformer.pk)
+>>> platformer_3d = Genre.objects.create(name='3D Platformer', parent=platformer)
+>>> platformer = Genre.objects.get(pk=platformer.pk)
+>>> platformer_4d = Genre.objects.create(name='4D Platformer', parent=platformer)
+>>> rpg = Genre.objects.create(name='Role-playing Game')
+>>> arpg = Genre.objects.create(name='Action RPG', parent=rpg)
+>>> rpg = Genre.objects.get(pk=rpg.pk)
+>>> trpg = Genre.objects.create(name='Tactical RPG', parent=rpg)
+>>> print_tree_details(Genre.objects.all())
+1 - 0
+2 1 1
+3 2 2
+4 2 2
+5 2 2
+6 - 0
+7 6 1
+8 6 1
+
+# TreeManager Methods #########################################################
+
+>>> Genre.objects.root_node(action.tree_id)
+<Genre: Action>
+>>> Genre.objects.root_node(rpg.tree_id)
+<Genre: Role-playing Game>
+
+>>> Genre.objects.root_node("1234" * 8)
+Traceback (most recent call last):
+...
+DoesNotExist: Genre matching query does not exist.
+
+>>> [g.name for g in Genre.objects.root_nodes()]
+[u'Action', u'Role-playing Game']
+
+>>> [g.parent for g in Genre.objects.all()]
+[None, <Genre: Action>, <Genre: Platformer>, <Genre: Platformer>, <Genre: Platformer>, None, <Genre: Role-playing Game>, <Genre: Role-playing Game>]
+
+# Model Instance Methods ######################################################
+>>> action = Genre.objects.get(pk=action.pk)
+>>> [g.name for g in action.get_ancestors()]
+[]
+>>> [g.name for g in action.get_ancestors(ascending=True)]
+[]
+>>> [g.name for g in action.get_children()]
+[u'Platformer']
+>>> [g.name for g in action.get_descendants()]
+[u'Platformer', u'2D Platformer', u'3D Platformer', u'4D Platformer']
+>>> [g.name for g in action.get_descendants(include_self=True)]
+[u'Action', u'Platformer', u'2D Platformer', u'3D Platformer', u'4D Platformer']
+>>> [g.name for g in platformer.get_family()]
+[u'Action', u'Platformer', u'2D Platformer', u'3D Platformer', u'4D Platformer']
+>>> action.get_descendant_count()
+4
+>>> action.get_root()
+<Genre: Action>
+>>> action.is_root_node()
+True
+>>> action.is_child_node()
+False
+>>> action.is_leaf_node()
+False
+>>> action.is_descendant_of(action)
+False
+>>> action.is_descendant_of(action, include_self=True)
+True
+>>> action.is_ancestor_of(action)
+False
+>>> action.is_ancestor_of(action, include_self=True)
+True
+
+>>> platformer = Genre.objects.get(pk=platformer.pk)
+>>> [g.name for g in platformer.get_ancestors()]
+[u'Action']
+>>> [g.name for g in platformer.get_ancestors(ascending=True)]
+[u'Action']
+>>> [g.name for g in platformer.get_children()]
+[u'2D Platformer', u'3D Platformer', u'4D Platformer']
+>>> [g.name for g in platformer.get_descendants()]
+[u'2D Platformer', u'3D Platformer', u'4D Platformer']
+>>> [g.name for g in platformer.get_descendants(include_self=True)]
+[u'Platformer', u'2D Platformer', u'3D Platformer', u'4D Platformer']
+>>> platformer.get_descendant_count()
+3
+>>> platformer.get_previous_sibling()
+>>> platformer.get_next_sibling()
+>>> platformer.get_root()
+<Genre: Action>
+>>> [g.name for g in platformer.get_siblings()]
+[]
+>>> [g.name for g in platformer.get_siblings(include_self=True)]
+[u'Platformer']
+>>> platformer.is_root_node()
+False
+>>> platformer.is_child_node()
+True
+>>> platformer.is_leaf_node()
+False
+>>> action.is_descendant_of(platformer)
+False
+>>> action.is_descendant_of(platformer, include_self=True)
+False
+>>> action.is_ancestor_of(platformer)
+True
+>>> action.is_ancestor_of(platformer, include_self=True)
+True
+
+>>> platformer_3d = Genre.objects.get(pk=platformer_3d.pk)
+>>> [g.name for g in platformer_3d.get_ancestors()]
+[u'Action', u'Platformer']
+>>> [g.name for g in platformer_3d.get_ancestors(ascending=True)]
+[u'Platformer', u'Action']
+>>> [g.name for g in platformer_3d.get_children()]
+[]
+>>> [g.name for g in platformer_3d.get_descendants()]
+[]
+>>> [g.name for g in platformer_3d.get_descendants(include_self=True)]
+[u'3D Platformer']
+>>> platformer_3d.get_descendant_count()
+0
+>>> platformer_3d.get_previous_sibling()
+<Genre: 2D Platformer>
+>>> platformer_3d.get_next_sibling()
+<Genre: 4D Platformer>
+>>> platformer_3d.get_root()
+<Genre: Action>
+>>> [g.name for g in platformer_3d.get_siblings()]
+[u'2D Platformer', u'4D Platformer']
+>>> [g.name for g in platformer_3d.get_siblings(include_self=True)]
+[u'2D Platformer', u'3D Platformer', u'4D Platformer']
+>>> platformer_3d.is_root_node()
+False
+>>> platformer_3d.is_child_node()
+True
+>>> platformer_3d.is_leaf_node()
+True
+>>> action.is_descendant_of(platformer_3d)
+False
+>>> action.is_descendant_of(platformer_3d, include_self=True)
+False
+>>> action.is_ancestor_of(platformer_3d)
+True
+>>> action.is_ancestor_of(platformer_3d, include_self=True)
+True
+>>> platformer_3d.is_descendant_of(platformer_3d)
+False
+>>> platformer_3d.is_descendant_of(platformer_3d, include_self=True)
+True
+>>> platformer_3d.is_ancestor_of(platformer_3d)
+False
+>>> platformer_3d.is_ancestor_of(platformer_3d, include_self=True)
+True
+
+# The move_to method will be used in other tests to verify that it calls the
+# TreeManager correctly.
+
+#######################
+# Intra-Tree Movement #
+#######################
+
+>>> root = Tree.objects.create()
+>>> c_1 = Tree.objects.create(parent=root)
+>>> c_1_1 = Tree.objects.create(parent=c_1)
+>>> c_1 = Tree.objects.get(pk=c_1.pk)
+>>> c_1_2 = Tree.objects.create(parent=c_1)
+>>> root = Tree.objects.get(pk=root.pk)
+>>> c_2 = Tree.objects.create(parent=root)
+>>> c_2_1 = Tree.objects.create(parent=c_2)
+>>> c_2 = Tree.objects.get(pk=c_2.pk)
+>>> c_2_2 = Tree.objects.create(parent=c_2)
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+3 2 2
+4 2 2
+5 1 1
+6 5 2
+7 5 2
+
+# Validate exceptions are raised appropriately
+>>> root = Tree.objects.get(pk=root.pk)
+>>> Tree.objects.move_node(root, root, position='first-child')
+Traceback (most recent call last):
+    ...
+InvalidMove: A node may not be made a child of itself.
+>>> c_1 = Tree.objects.get(pk=c_1.pk)
+>>> c_1_1 = Tree.objects.get(pk=c_1_1.pk)
+>>> Tree.objects.move_node(c_1, c_1_1, position='last-child')
+Traceback (most recent call last):
+    ...
+InvalidMove: A node may not be made a child of any of its descendants.
+>>> Tree.objects.move_node(root, root, position='right')
+Traceback (most recent call last):
+    ...
+InvalidMove: A node may not be made a sibling of itself.
+>>> c_2 = Tree.objects.get(pk=c_2.pk)
+>>> Tree.objects.move_node(c_1, c_1_1, position='left')
+Traceback (most recent call last):
+    ...
+InvalidMove: A node may not be made a sibling of any of its descendants.
+>>> Tree.objects.move_node(c_1, c_2, position='cheese')
+Traceback (most recent call last):
+    ...
+ValueError: An invalid position was given: cheese.
+
+# Move up the tree using first-child
+>>> c_2_2 = Tree.objects.get(pk=c_2_2.pk)
+>>> c_1 = Tree.objects.get(pk=c_1.pk)
+>>> Tree.objects.move_node(c_2_2, c_1, 'first-child')
+>>> print_tree_details([c_2_2])
+7 2 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+7 2 2
+3 2 2
+4 2 2
+5 1 1
+6 5 2
+
+# Undo the move using right
+>>> c_2_1 = Tree.objects.get(pk=c_2_1.pk)
+>>> c_2_2.move_to(c_2_1, 'right')
+>>> print_tree_details([c_2_2])
+7 5 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+3 2 2
+4 2 2
+5 1 1
+6 5 2
+7 5 2
+
+# Move up the tree with descendants using first-child
+>>> c_2 = Tree.objects.get(pk=c_2.pk)
+>>> c_1 = Tree.objects.get(pk=c_1.pk)
+>>> Tree.objects.move_node(c_2, c_1, 'first-child')
+>>> print_tree_details([c_2])
+5 2 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+5 2 2
+6 5 3
+7 5 3
+3 2 2
+4 2 2
+
+# Undo the move using right
+>>> c_1 = Tree.objects.get(pk=c_1.pk)
+>>> Tree.objects.move_node(c_2, c_1, 'right')
+>>> print_tree_details([c_2])
+5 1 1
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+3 2 2
+4 2 2
+5 1 1
+6 5 2
+7 5 2
+
+COVERAGE    | U1 | U> | D1 | D>
+------------+----+----+----+----
+first-child | Y  | Y  |    |
+last-child  |    |    |    |
+left        |    |    |    |
+right       |    |    | Y  | Y
+
+# Move down the tree using first-child
+>>> c_1_2 = Tree.objects.get(pk=c_1_2.pk)
+>>> c_2 = Tree.objects.get(pk=c_2.pk)
+>>> Tree.objects.move_node(c_1_2, c_2, 'first-child')
+>>> print_tree_details([c_1_2])
+4 5 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+3 2 2
+5 1 1
+4 5 2
+6 5 2
+7 5 2
+
+# Undo the move using last-child
+>>> c_1 = Tree.objects.get(pk=c_1.pk)
+>>> Tree.objects.move_node(c_1_2, c_1, 'last-child')
+>>> print_tree_details([c_1_2])
+4 2 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+3 2 2
+4 2 2
+5 1 1
+6 5 2
+7 5 2
+
+# Move down the tree with descendants using first-child
+>>> c_1 = Tree.objects.get(pk=c_1.pk)
+>>> c_2 = Tree.objects.get(pk=c_2.pk)
+>>> Tree.objects.move_node(c_1, c_2, 'first-child')
+>>> print_tree_details([c_1])
+2 5 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+5 1 1
+2 5 2
+3 2 3
+4 2 3
+6 5 2
+7 5 2
+
+# Undo the move using left
+>>> c_2 = Tree.objects.get(pk=c_2.pk)
+>>> Tree.objects.move_node(c_1, c_2, 'left')
+>>> print_tree_details([c_1])
+2 1 1
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+3 2 2
+4 2 2
+5 1 1
+6 5 2
+7 5 2
+
+COVERAGE    | U1 | U> | D1 | D>
+------------+----+----+----+----
+first-child | Y  | Y  | Y  | Y
+last-child  | Y  |    |    |
+left        |    | Y  |    |
+right       |    |    | Y  | Y
+
+# Move up the tree using right
+>>> c_2_2 = Tree.objects.get(pk=c_2_2.pk)
+>>> c_1_1 = Tree.objects.get(pk=c_1_1.pk)
+>>> Tree.objects.move_node(c_2_2, c_1_1, 'right')
+>>> print_tree_details([c_2_2])
+7 2 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+3 2 2
+7 2 2
+4 2 2
+5 1 1
+6 5 2
+
+# Undo the move using last-child
+>>> c_2 = Tree.objects.get(pk=c_2.pk)
+>>> Tree.objects.move_node(c_2_2, c_2, 'last-child')
+>>> print_tree_details([c_2_2])
+7 5 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+3 2 2
+4 2 2
+5 1 1
+6 5 2
+7 5 2
+
+# Move up the tree with descendants using right
+>>> c_2 = Tree.objects.get(pk=c_2.pk)
+>>> c_1_1 = Tree.objects.get(pk=c_1_1.pk)
+>>> Tree.objects.move_node(c_2, c_1_1, 'right')
+>>> print_tree_details([c_2])
+5 2 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+3 2 2
+5 2 2
+6 5 3
+7 5 3
+4 2 2
+
+# Undo the move using last-child
+>>> root = Tree.objects.get(pk=root.pk)
+>>> Tree.objects.move_node(c_2, root, 'last-child')
+>>> print_tree_details([c_2])
+5 1 1
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+3 2 2
+4 2 2
+5 1 1
+6 5 2
+7 5 2
+
+COVERAGE    | U1 | U> | D1 | D>
+------------+----+----+----+----
+first-child | Y  | Y  | Y  | Y
+last-child  | Y  |    | Y  | Y
+left        |    | Y  |    |
+right       | Y  | Y  | Y  | Y
+
+# Move down the tree with descendants using left
+>>> c_1 = Tree.objects.get(pk=c_1.pk)
+>>> c_2_2 = Tree.objects.get(pk=c_2_2.pk)
+>>> Tree.objects.move_node(c_1, c_2_2, 'left')
+>>> print_tree_details([c_1])
+2 5 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+5 1 1
+6 5 2
+2 5 2
+3 2 3
+4 2 3
+7 5 2
+
+# Undo the move using first-child
+>>> root = Tree.objects.get(pk=root.pk)
+>>> Tree.objects.move_node(c_1, root, 'first-child')
+>>> print_tree_details([c_1])
+2 1 1
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+3 2 2
+4 2 2
+5 1 1
+6 5 2
+7 5 2
+
+# Move down the tree using left
+>>> c_1_1 = Tree.objects.get(pk=c_1_1.pk)
+>>> c_2_2 = Tree.objects.get(pk=c_2_2.pk)
+>>> Tree.objects.move_node(c_1_1, c_2_2, 'left')
+>>> print_tree_details([c_1_1])
+3 5 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+4 2 2
+5 1 1
+6 5 2
+3 5 2
+7 5 2
+
+# Undo the move using left
+>>> c_1_2 = Tree.objects.get(pk=c_1_2.pk)
+>>> Tree.objects.move_node(c_1_1,  c_1_2, 'left')
+>>> print_tree_details([c_1_1])
+3 2 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+3 2 2
+4 2 2
+5 1 1
+6 5 2
+7 5 2
+
+COVERAGE    | U1 | U> | D1 | D>
+------------+----+----+----+----
+first-child | Y  | Y  | Y  | Y
+last-child  | Y  | Y  | Y  | Y
+left        | Y  | Y  | Y  | Y
+right       | Y  | Y  | Y  | Y
+
+I guess we're covered :)
+
+#######################
+# Inter-Tree Movement #
+#######################
+
+>>> new_root = Tree.objects.create()
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+3 2 2
+4 2 2
+5 1 1
+6 5 2
+7 5 2
+8 - 0
+
+# Moving child nodes between trees ############################################
+
+# Move using default (last-child)
+>>> c_2 = Tree.objects.get(pk=c_2.pk)
+>>> c_2.move_to(new_root)
+>>> print_tree_details([c_2])
+5 8 1
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+3 2 2
+4 2 2
+8 - 0
+5 8 1
+6 5 2
+7 5 2
+
+# Move using left
+>>> c_1_1 = Tree.objects.get(pk=c_1_1.pk)
+>>> c_2 = Tree.objects.get(pk=c_2.pk)
+>>> Tree.objects.move_node(c_1_1, c_2, position='left')
+>>> print_tree_details([c_1_1])
+3 8 1
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+4 2 2
+8 - 0
+3 8 1
+5 8 1
+6 5 2
+7 5 2
+
+# Move using first-child
+>>> c_1_2 = Tree.objects.get(pk=c_1_2.pk)
+>>> c_2 = Tree.objects.get(pk=c_2.pk)
+>>> Tree.objects.move_node(c_1_2, c_2, position='first-child')
+>>> print_tree_details([c_1_2])
+4 5 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+8 - 0
+3 8 1
+5 8 1
+4 5 2
+6 5 2
+7 5 2
+
+# Move using right
+>>> c_2 = Tree.objects.get(pk=c_2.pk)
+>>> c_1 = Tree.objects.get(pk=c_1.pk)
+>>> Tree.objects.move_node(c_2, c_1, position='right')
+>>> print_tree_details([c_2])
+5 1 1
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+5 1 1
+4 5 2
+6 5 2
+7 5 2
+8 - 0
+3 8 1
+
+# Move using last-child
+>>> c_1_1 = Tree.objects.get(pk=c_1_1.pk)
+>>> Tree.objects.move_node(c_1_1, c_2, position='last-child')
+>>> print_tree_details([c_1_1])
+3 5 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+5 1 1
+4 5 2
+6 5 2
+7 5 2
+3 5 2
+8 - 0
+
+# Moving a root node into another tree as a child node ########################
+
+# Validate exceptions are raised appropriately
+>>> Tree.objects.move_node(root, c_1, position='first-child')
+Traceback (most recent call last):
+    ...
+InvalidMove: A node may not be made a child of any of its descendants.
+>>> Tree.objects.move_node(new_root, c_1, position='cheese')
+Traceback (most recent call last):
+    ...
+ValueError: An invalid position was given: cheese.
+
+>>> new_root = Tree.objects.get(pk=new_root.pk)
+>>> c_2 = Tree.objects.get(pk=c_2.pk)
+>>> new_root.move_to(c_2, position='first-child')
+>>> print_tree_details([new_root])
+8 5 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+5 1 1
+8 5 2
+4 5 2
+6 5 2
+7 5 2
+3 5 2
+
+>>> new_root = Tree.objects.create()
+>>> root = Tree.objects.get(pk=root.pk)
+>>> Tree.objects.move_node(new_root, root, position='last-child')
+>>> print_tree_details([new_root])
+9 1 1
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+5 1 1
+8 5 2
+4 5 2
+6 5 2
+7 5 2
+3 5 2
+9 1 1
+
+>>> new_root = Tree.objects.create()
+>>> c_2_1 = Tree.objects.get(pk=c_2_1.pk)
+>>> Tree.objects.move_node(new_root, c_2_1, position='left')
+>>> print_tree_details([new_root])
+10 5 2
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+5 1 1
+8 5 2
+4 5 2
+10 5 2
+6 5 2
+7 5 2
+3 5 2
+9 1 1
+
+>>> new_root = Tree.objects.create()
+>>> c_1 = Tree.objects.get(pk=c_1.pk)
+>>> Tree.objects.move_node(new_root, c_1, position='right')
+>>> print_tree_details([new_root])
+11 1 1
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+11 1 1
+5 1 1
+8 5 2
+4 5 2
+10 5 2
+6 5 2
+7 5 2
+3 5 2
+9 1 1
+
+# Making nodes siblings of root nodes #########################################
+
+# Validate exceptions are raised appropriately
+>>> root = Tree.objects.get(pk=root.pk)
+>>> Tree.objects.move_node(root, root, position='left')
+Traceback (most recent call last):
+    ...
+InvalidMove: A node may not be made a sibling of itself.
+>>> Tree.objects.move_node(root, root, position='right')
+Traceback (most recent call last):
+    ...
+InvalidMove: A node may not be made a sibling of itself.
+
+>>> Tree.objects.all().delete()
+(11, {u'myapp.Tree': 11})
+>>> reset_sequence(Tree)
+
+>>> r1 = Tree.objects.create()
+>>> c1_1 = Tree.objects.create(parent=r1)
+>>> c1_1_1 = Tree.objects.create(parent=c1_1)
+>>> r2 = Tree.objects.create()
+>>> c2_1 = Tree.objects.create(parent=r2)
+>>> c2_1_1 = Tree.objects.create(parent=c2_1)
+>>> r3 = Tree.objects.create()
+>>> c3_1 = Tree.objects.create(parent=r3)
+>>> c3_1_1 = Tree.objects.create(parent=c3_1)
+>>> print_tree_details(Tree.objects.all())
+1 - 0
+2 1 1
+3 2 2
+4 - 0
+5 4 1
+6 5 2
+7 - 0
+8 7 1
+9 8 2
+
+>>> Tree.objects.all().delete()
+(9, {u'myapp.Tree': 9})
+>>> reset_sequence(Tree)
+
+# Insertion of positioned nodes ###############################################
+>>> r1 = Insert.objects.create()
+>>> r2 = Insert.objects.create()
+>>> r3 = Insert.objects.create()
+>>> print_tree_details(Insert.objects.all())
+1 - 0
+2 - 0
+3 - 0
+
+>>> r2 = Insert.objects.get(pk=r2.pk)
+>>> c1 = Insert()
+>>> c1 = Insert.objects.insert_node(c1, r2, save=True)
+>>> print_tree_details([c1])
+4 2 1
+>>> print_tree_details(Insert.objects.all())
+1 - 0
+2 - 0
+4 2 1
+3 - 0
+
+>>> c1.insert_at(r2)
+Traceback (most recent call last):
+    ...
+ValueError: Cannot insert a node which has already been saved.
+
+# First child
+>>> r2 = Insert.objects.get(pk=r2.pk)
+>>> c2 = Insert()
+>>> c2 = Insert.objects.insert_node(c2, r2, position='first-child', save=True)
+>>> print_tree_details([c2])
+5 2 1
+>>> print_tree_details(Insert.objects.all())
+1 - 0
+2 - 0
+5 2 1
+4 2 1
+3 - 0
+

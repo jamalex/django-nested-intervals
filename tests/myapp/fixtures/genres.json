@@ -1,0 +1,123 @@
+[
+  {
+    "pk": 1, 
+    "model": "myapp.genre", 
+    "fields": {
+      "right": 1.0, 
+      "name": "Action", 
+      "level": 0, 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.0
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "myapp.genre", 
+    "fields": {
+      "right": 0.5333333333333333, 
+      "name": "Platformer", 
+      "level": 1, 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.06666666666666667
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "myapp.genre", 
+    "fields": {
+      "right": 0.2, 
+      "name": "2D Platformer", 
+      "level": 2, 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.13333333333333333
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "myapp.genre", 
+    "fields": {
+      "right": 0.3333333333333333, 
+      "name": "3D Platformer", 
+      "level": 2, 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.26666666666666666
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "myapp.genre", 
+    "fields": {
+      "right": 0.4666666666666667, 
+      "name": "4D Platformer", 
+      "level": 2, 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.4
+    }
+  }, 
+  {
+    "pk": 6, 
+    "model": "myapp.genre", 
+    "fields": {
+      "right": 0.9333333333333333, 
+      "name": "Shootemup", 
+      "level": 1, 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.6
+    }
+  }, 
+  {
+    "pk": 7, 
+    "model": "myapp.genre", 
+    "fields": {
+      "right": 0.7333333333333333, 
+      "name": "Vertical Scrolling Shootemup", 
+      "level": 2, 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.6666666666666666
+    }
+  }, 
+  {
+    "pk": 8, 
+    "model": "myapp.genre", 
+    "fields": {
+      "right": 0.8666666666666667, 
+      "name": "Horizontal Scrolling Shootemup", 
+      "level": 2, 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.8
+    }
+  }, 
+  {
+    "pk": 9, 
+    "model": "myapp.genre", 
+    "fields": {
+      "right": 1.0, 
+      "name": "Role-playing Game", 
+      "level": 0, 
+      "tree_id": "22222222222222222222222222222222", 
+      "left": 0.0
+    }
+  }, 
+  {
+    "pk": 10, 
+    "model": "myapp.genre", 
+    "fields": {
+      "right": 0.4, 
+      "name": "Action RPG", 
+      "level": 1, 
+      "tree_id": "22222222222222222222222222222222", 
+      "left": 0.2
+    }
+  }, 
+  {
+    "pk": 11, 
+    "model": "myapp.genre", 
+    "fields": {
+      "right": 0.8, 
+      "name": "Tactical RPG", 
+      "level": 1, 
+      "tree_id": "22222222222222222222222222222222", 
+      "left": 0.6
+    }
+  }
+]

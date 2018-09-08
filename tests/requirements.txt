@@ -1,0 +1,5 @@
+mock-django
+Django >= 1.11
+coverage
+django-js-asset
+mock

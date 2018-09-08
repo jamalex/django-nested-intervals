@@ -1,0 +1,122 @@
+[
+  {
+    "pk": 1, 
+    "model": "myapp.category", 
+    "fields": {
+      "right": 1.0, 
+      "name": "PC & Video Games", 
+      "level": 0, 
+      "category_uuid": "6263ac21-f08b-4b44-9462-0489c56e0d3d", 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.0
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "myapp.category", 
+    "fields": {
+      "right": 0.3157894736842105, 
+      "name": "Nintendo Wii", 
+      "level": 1, 
+      "category_uuid": "c6125cec-ef08-4095-9a07-fd5c6db50cc1", 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.05263157894736842
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "myapp.category", 
+    "fields": {
+      "right": 0.15789473684210525, 
+      "name": "Games", 
+      "level": 2, 
+      "category_uuid": "85da870c-837a-48a5-a3e8-ab651cfdd799", 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.10526315789473684
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "myapp.category", 
+    "fields": {
+      "right": 0.2631578947368421, 
+      "name": "Hardware & Accessories", 
+      "level": 2, 
+      "category_uuid": "840d1ccb-9ecc-48b0-bf7c-5b0f08334d3d", 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.21052631578947367
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "myapp.category", 
+    "fields": {
+      "right": 0.631578947368421, 
+      "name": "Xbox 360", 
+      "level": 1, 
+      "category_uuid": "b6299e26-d5e9-4dc2-9e2a-3f8033c8dfe5", 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.3684210526315789
+    }
+  }, 
+  {
+    "pk": 6, 
+    "model": "myapp.category", 
+    "fields": {
+      "right": 0.47368421052631576, 
+      "name": "Games", 
+      "level": 2, 
+      "category_uuid": "8171b0ec-f6e6-46dc-aabc-46a6399d9290", 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.42105263157894735
+    }
+  }, 
+  {
+    "pk": 7, 
+    "model": "myapp.category", 
+    "fields": {
+      "right": 0.5789473684210527, 
+      "name": "Hardware & Accessories", 
+      "level": 2, 
+      "category_uuid": "a64720cb-af69-440a-9abc-5a8f095974e4", 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.5263157894736842
+    }
+  }, 
+  {
+    "pk": 8, 
+    "model": "myapp.category", 
+    "fields": {
+      "right": 0.9473684210526315, 
+      "name": "PlayStation 3", 
+      "level": 1, 
+      "category_uuid": "01cac717-454e-48bd-8180-8a0089613bbd", 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.6842105263157895
+    }
+  }, 
+  {
+    "pk": 9, 
+    "model": "myapp.category", 
+    "fields": {
+      "right": 0.7894736842105263, 
+      "name": "Games", 
+      "level": 2, 
+      "category_uuid": "74f9c250-6e75-4152-bbc9-f7a89969c82b", 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.7368421052631579
+    }
+  }, 
+  {
+    "pk": 10, 
+    "model": "myapp.category", 
+    "fields": {
+      "right": 0.8947368421052632, 
+      "name": "Hardware & Accessories", 
+      "level": 2, 
+      "category_uuid": "a4918038-4d03-48ca-8cc3-1c28e177bed5", 
+      "tree_id": "11111111111111111111111111111111", 
+      "left": 0.8421052631578947
+    }
+  }
+]

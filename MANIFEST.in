@@ -1,0 +1,6 @@
+include INSTALL
+include LICENSE
+include MANIFEST.in
+include NOTES
+include README.rst
+global-exclude __pycache__ *.pyc
