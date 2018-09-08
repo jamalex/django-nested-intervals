@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 export PYTHONPATH="./"
-export DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-settings}
+export DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-myapp.settings}
 
 if [ `which coverage` ] ; then
     export COVERAGE='coverage run'
