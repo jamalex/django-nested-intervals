@@ -366,16 +366,12 @@ class NestedIntervalsModel(models.Model):
 
         super(NestedIntervalsModel, self).save(*args, **kwargs)
 
-    save.alters_data = True
-
     def delete(self, *args, **kwargs):
         """Calling ``delete`` on a node will delete it as well as its full
         subtree, as opposed to reattaching all the subnodes to its parent node.
 
         ``delete`` will not return anything. """
         self.get_descendants(include_self=True).delete()
-
-    delete.alters_data = True
 
     def _get_user_field_names(self):
         """ Returns the list of user defined (i.e. non-nested_intervals internal) field names. """
@@ -385,3 +381,12 @@ class NestedIntervalsModel(models.Model):
             if (field.name not in internal_fields) and (not isinstance(field, AutoField)) and (not field.primary_key):
                 field_names.append(field.name)
         return field_names
+
+    def print_tree(self, indent=0):
+        print("{indent}{name} ({left}, {right})".format(
+            indent="    "*indent,
+            name=getattr(node, "name", node.id),
+            left=node.left,
+            right=node.right))
+        for child in node.get_children():
+            self.print_tree(child, indent+1)
