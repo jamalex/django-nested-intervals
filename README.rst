@@ -5,9 +5,7 @@ django-nested-sets-with-rational-numbers
 Utilities for implementing Nested Sets with Rational Numbers tree structures with your
 Django Models and working with trees of Model instances.
 
-Interface closely tracks Django MPTT. 
-
-The tests have been extended to cover both sqlite and postgres (unlike mptt, which only covers sqlite).
+The interface closely tracks Django MPTT (and it was built on top of some of that codebase). The tests have been extended to cover both sqlite and postgres (unlike MPTT, which only covers sqlite).
 
 I wouldn't recommend using it in SQLite for anything other than playing around, as SQLite doesn't have true fixed-point decimal types, it just uses floating point under the hood for DecimalField, so it can have unexpected rounding issues. Postgres, on the other hand, has true fixed-point decimals, and handles things well.
 
